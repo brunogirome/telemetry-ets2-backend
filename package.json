@@ -22,11 +22,10 @@
     "vitest": "^0.29.1"
   },
   "dependencies": {
+    "@nut-tree/nut-js": "^3.0.0",
     "@types/socket.io": "^3.0.2",
     "cors": "^2.8.5",
     "express": "^4.18.2",
-    "node-key-sender": "^1.0.11",
-    "robotjs": "^0.6.0",
     "socket.io": "^4.6.1",
     "trucksim-telemetry": "^0.19.1",
     "zod": "^3.20.6"
