@@ -10,21 +10,12 @@ import { Server } from 'socket.io';
 
 import { keyboard } from '@nut-tree/nut-js';
 
-interface TelemetryInfo {
-  truckSpeed: number;
-  currentFuel: number;
-  totalFuel: number;
+interface Speed {
+  kph: number;
+}
 
-  hazardLight?: boolean;
-  cruizeControl: boolean;
-  highLight: boolean;
-  engineBreak: boolean;
-
-  differential?: boolean;
-  light: boolean;
-  retarderStatus: number;
-
-  currentMaxSpeed: number;
+interface CruiseControl {
+  enabled: boolean;
 }
 
 keyboard.config.autoDelayMs = 0;
@@ -54,49 +45,65 @@ io.on('connection', socket => {
   });
 });
 
+function configureBooleanEmmiter(key: string) {
+  telemetry.truck.on(key, (status: boolean) => {
+    console.log(`${key} status: ${status}`);
+
+    io.emit(key, status || false);
+  });
+}
+
+function configureNumberEmmiter(key: string) {
+  telemetry.truck.on(key, (value: number) => {
+    io.emit(key, Math.round(value));
+  });
+}
+
+telemetry.watch({ interval: 100 });
+
+configureBooleanEmmiter('hazard');
+
+configureBooleanEmmiter('cruise-control');
+
+telemetry.truck.on('cruise-control', ({ enabled }: CruiseControl) => {
+  console.log(`cruise-control status: ${enabled}`);
+
+  io.emit('cruise-control', enabled || false);
+});
+
+configureBooleanEmmiter('high-beam');
+
+configureBooleanEmmiter('engine-break');
+
+configureBooleanEmmiter('differential');
+
+configureBooleanEmmiter('low-beam');
+
+configureBooleanEmmiter('park');
+
+telemetry.truck.on('speed', ({ kph }: Speed) => {
+  const speed = kph > 0 ? kph : 0;
+
+  io.emit('speed', speed);
+});
+
 let lastSpeedLimit = MIN_SPEED;
 
-telemetry.watch({ interval: 50 });
+telemetry.navigation.on('speed-limit', ({ kph: currentSpeedLimit }: Speed) => {
+  lastSpeedLimit =
+    currentSpeedLimit > MIN_SPEED ? currentSpeedLimit : lastSpeedLimit;
 
-telemetry.truck.on('hazard', () => {
-  console.log('hazard');
+  const speedLimit =
+    currentSpeedLimit > MIN_SPEED ? currentSpeedLimit : lastSpeedLimit;
 
-  io.emit('hazard_light', telemetry.getTruck().lights.hazard?.enabled || false);
+  console.log(`speed limit: ${speedLimit}`);
+
+  io.emit('speed-limit', speedLimit);
 });
 
-telemetry.truck.on('speed', () => {
-  io.emit('speed', telemetry.getTruck().speed.kph);
-});
+configureNumberEmmiter('fuel-value');
 
-// telemetry.watch({ interval: 25 }, ({ truck, navigation }) => {
-//   const currentSpeedLimit = navigation.speedLimit.kph;
-
-//   lastSpeedLimit = currentSpeedLimit >= 30 ? currentSpeedLimit : lastSpeedLimit;
-
-//   const speedLimit =
-//     currentSpeedLimit >= 30 ? currentSpeedLimit : lastSpeedLimit;
-
-//   // const apiTelemetry: TelemetryInfo = {
-//   //   truckSpeed: truck.speed.kph,
-//   //   currentFuel: truck.fuel.value,
-//   //   totalFuel: truck.fuel.capacity,
-
-//   //   hazardLight: truck.lights.hazard?.enabled,
-//   //   cruizeControl: truck.cruiseControl.enabled,
-//   //   highLight: truck.lights.beamHigh.enabled,
-//   //   engineBreak: truck.brakes.motor.enabled,
-
-//   //   differential: truck.differential.lock?.enabled,
-//   //   light: truck.lights.beacon.enabled,
-//   //   retarderStatus: truck.brakes.retarder.steps,
-
-//   //   currentMaxSpeed: navigation.speedLimit.kph,
-//   // };
-
-//   io.emit('speed', truck.speed.kph);
-
-//   io.emit('speed_limit', speedLimit);
-// });
+configureNumberEmmiter('fuel-capacity');
 
 app.get('/', (req, res) => {
   res.send({ message: 'Wellcome to temeltry ets api' });
