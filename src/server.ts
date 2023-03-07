@@ -18,6 +18,22 @@ interface CruiseControl {
   enabled: boolean;
 }
 
+interface TelemetryInitialization {
+  hazard: boolean;
+  cruiseControl: boolean;
+  highlight: boolean;
+  engineBreak: boolean;
+  differential: boolean;
+  light: boolean;
+  parking: boolean;
+
+  maxSpeed: number;
+  currentSpeed: number;
+
+  currentFuel: number;
+  fuelCapacity: number;
+}
+
 keyboard.config.autoDelayMs = 0;
 
 const MIN_SPEED = 10;
@@ -35,8 +51,33 @@ io.disconnectSockets();
 app.use(cors());
 app.use(express.json());
 
+telemetry.watch({ interval: 100 });
+
 io.on('connection', socket => {
   console.log(`${socket.id} connected.`);
+
+  const { lights, cruiseControl, brakes, differential, speed, fuel } =
+    telemetry.getTruck();
+
+  const { speedLimit } = telemetry.getNavigation();
+
+  const telemetryInitialization: TelemetryInitialization = {
+    hazard: lights.hazard?.enabled || false,
+    cruiseControl: cruiseControl.enabled,
+    highlight: lights.beamHigh.enabled,
+    engineBreak: brakes.motor.enabled,
+    differential: differential.lock?.enabled || false,
+    light: lights.beamLow.enabled,
+    parking: brakes.parking.enabled,
+
+    maxSpeed: speedLimit.kph,
+    currentSpeed: speed.kph,
+
+    currentFuel: Math.round(fuel.value),
+    fuelCapacity: Math.round(fuel.capacity),
+  };
+
+  socket.emit('telemetry-initialization', telemetryInitialization);
 
   socket.on('ingame_command', key => {
     console.log(`${key} pressed`);
@@ -58,8 +99,6 @@ function configureNumberEmmiter(key: string) {
     io.emit(key, Math.round(value));
   });
 }
-
-telemetry.watch({ interval: 100 });
 
 configureBooleanEmmiter('hazard');
 

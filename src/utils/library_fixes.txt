@@ -1,0 +1,41 @@
+Add this lines on truck.js file: 
+
+  // Hazard-Test
+  if (currentState.truck?.lights?.hazard?.enabled != previousState.truck?.lights?.hazard?.enabled) {
+    telemetry.truck.emit('hazard', currentState.truck.lights.hazard.enabled)
+  }
+
+  // Speed-Test
+  if (currentState.truck?.speed != previousState.truck?.speed) {
+    telemetry.truck.emit('speed', currentState.truck.speed)
+  }
+  
+  // HighBeam-Test
+  if (currentState.truck?.lights?.beamHigh?.enabled != previousState.truck?.lights?.beamHigh?.enabled) {
+    telemetry.truck.emit('high-beam', currentState.truck.lights.beamHigh.enabled)
+  }
+
+  // EngineBreak-Test
+  if (currentState.truck?.brakes?.motor?.enabled != previousState.truck?.brakes?.motor?.enabled) {
+    telemetry.truck.emit('engine-break', currentState.truck.brakes.motor.enabled)
+  }
+
+  // Differential-Test
+  if (currentState.truck?.differential?.lock?.enabled != previousState.truck?.differential?.lock?.enabled) {
+    telemetry.truck.emit('differential', currentState.truck.differential.lock.enabled)
+  }
+
+  // BeamLow-Test
+  if (currentState.truck?.lights?.beamLow?.enabled != previousState.truck?.lights?.beamLow?.enabled) {
+    telemetry.truck.emit('low-beam', currentState.truck.lights.beamLow.enabled)
+  }
+
+  // CurrentFuel-Test
+  if (currentState.truck?.fuel?.value != previousState.truck?.fuel?.value) {
+    telemetry.truck.emit('fuel-value', currentState.truck.fuel.value)
+  }
+
+  // FuelCapacity-Test
+  if (currentState.truck?.fuel?.capacity != previousState.truck?.fuel?.capacity) {
+    telemetry.truck.emit('fuel-capacity', currentState.truck.lights.beamLow.enabled)
+  }
